@@ -1,81 +1,130 @@
-// Utilizando o Servidor: db4free.net
+# Utilizando o Servidor: db4free.net
 
 import pymysql
-import time
-from calculo import calcula_Max, calcula_bacterias
+from calculo import calcula_bacterias
 
-class dataBase:
-    def __init__(self) -> None:
-        pass
-        
-def inserirDados(valor):
-    conexaoDB = pymysql.connect(host="db4free.net", user="grupo8", password="12341234", database="proj_grupo8")
-    cursor = conexaoDB.cursor()
-    sql = """INSERT INTO minhaTabela(valores)
-            VALUES (%s)"""
+# Configurações do banco de dados
+DB_CONFIG = {
+    "host": "db4free.net",
+    "user": "grupo8",
+    "password": "12341234",
+    "database": "proj_grupo8"
+}
+
+
+def conectar():
+    """
+    Cria e retorna uma conexão com o banco de dados.
+    """
+    return pymysql.connect(**DB_CONFIG)
+
+
+def inserir_dados(valor):
+    """
+    Insere um valor na tabela.
+    """
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    sql = """
+        INSERT INTO minhaTabela(valores)
+        VALUES (%s)
+    """
+
     try:
-        cursor.execute(sql, valor)
-        conexaoDB.commit()  # tornar mudanças permanentes no Banco de Dados
+        cursor.execute(sql, (valor,))
+        conexao.commit()
+        print(f"Valor {valor} inserido com sucesso!")
 
-    except:
-        conexaoDB.rollback()
-        print("Erro!!! Unable to INSERT Data")
+    except pymysql.MySQLError as erro:
+        conexao.rollback()
+        print(f"Erro ao inserir dados: {erro}")
 
-    cursor.close()
-    conexaoDB.close()
+    finally:
+        cursor.close()
+        conexao.close()
 
 
-def mostrarDados():
-    conexaoDB = pymysql.connect(host="db4free.net", user="grupo8", password="12341234", database="proj_grupo8")
-    cursor = conexaoDB.cursor()
+def mostrar_dados():
+    """
+    Mostra todos os dados da tabela.
+    """
+    conexao = conectar()
+    cursor = conexao.cursor()
 
-    sql = 'SELECT * FROM minhaTabela'
+    sql = "SELECT * FROM minhaTabela"
 
     try:
         cursor.execute(sql)
-        print(sql)
-        results = cursor.fetchall()
-        for row in results:
-            valor = row[0]
-            print("valores", valor)
+        resultados = cursor.fetchall()
 
-    except:
-        print("Erro!!! Unable to FETCH Data")
+        print("\nDados da tabela:\n")
 
-    cursor.close()
-    conexaoDB.close()
+        for row in resultados:
+            print(f"Valor: {row[0]}")
 
-def limpaTabela():
-    conexaoDB = pymysql.connect(host="db4free.net", user="grupo8", password="12341234", database="proj_grupo8")
-    cursor = conexaoDB.cursor()
-    #sql = "DELETE from minhaTabela WHERE valores = 8"
+    except pymysql.MySQLError as erro:
+        print(f"Erro ao buscar dados: {erro}")
+
+    finally:
+        cursor.close()
+        conexao.close()
+
+
+def limpar_tabela():
+    """
+    Limpa todos os dados da tabela.
+    """
+    conexao = conectar()
+    cursor = conexao.cursor()
+
     sql = "TRUNCATE TABLE minhaTabela"
-    
+
     try:
         cursor.execute(sql)
-        conexaoDB.commit()  # tornar mudanças permanentes no Banco de Dados
+        conexao.commit()
+        print("Tabela limpa com sucesso!")
 
-    except:
-        conexaoDB.rollback()
-        print("Erro!!! Unable to CLEAN Data")
+    except pymysql.MySQLError as erro:
+        conexao.rollback()
+        print(f"Erro ao limpar tabela: {erro}")
 
-    cursor.close()
-    conexaoDB.close()
+    finally:
+        cursor.close()
+        conexao.close()
 
-#inserirDados(1)
-#mostrarDados()
 
-lista = calcula_bacterias(5)
-print(lista)
+def inserir_lista(lista):
+    """
+    Insere todos os valores da lista no banco.
+    """
+    for valor in lista:
+        print(f"Inserindo: {valor}")
+        inserir_dados(valor)
 
-def insereLista(lista):
-    for i in range(0,len(lista)):
-        #time.sleep(10)
-        print(lista[i])
-        inserirDados(lista[i])
 
-def tamanhoLista(lista):
+def tamanho_lista(lista):
+    """
+    Retorna o tamanho da lista.
+    """
     return len(lista)
 
-limpaTabela()
-insereLista(lista)
+
+if __name__ == "__main__":
+
+    # Gera a lista de bactérias
+    lista = calcula_bacterias(5)
+
+    print("\nLista gerada:")
+    print(lista)
+
+    print(f"\nTamanho da lista: {tamanho_lista(lista)}")
+
+    # Limpa tabela antes de inserir novos dados
+    limpar_tabela()
+
+    # Insere os dados no banco
+    inserir_lista(lista)
+
+    # Mostra os dados inseridos
+    mostrar_dados()
