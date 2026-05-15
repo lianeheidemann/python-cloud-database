@@ -1,4 +1,4 @@
-# 🦠 Sistema de Armazenamento de Dados com Python e MySQL
+# 🗃️ Sistema de Armazenamento de Dados com Python e MySQL
 
 Projeto desenvolvido em Python para realizar inserção, leitura e limpeza de dados em um banco MySQL hospedado online.
 
