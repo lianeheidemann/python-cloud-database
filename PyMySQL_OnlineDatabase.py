@@ -1,14 +1,15 @@
 # Utilizando o Servidor: db4free.net
 
 import pymysql
+import os
 from calculo import calcula_bacterias
 
 # Configurações do banco de dados
 DB_CONFIG = {
-    "host": "db4free.net",
-    "user": "grupo8",
-    "password": "12341234",
-    "database": "proj_grupo8"
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME")
 }
 
 
