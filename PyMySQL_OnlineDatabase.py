@@ -1,8 +1,11 @@
 # Utilizando o Servidor: db4free.net
-
-import pymysql
 import os
+import pymysql
 from calculo import calcula_bacterias
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 # Configurações do banco de dados
 DB_CONFIG = {
