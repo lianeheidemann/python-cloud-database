@@ -37,144 +37,166 @@ if SSL_CA:
 
 
 def conectar():
-    """
-    Cria e retorna uma conexão com o banco de dados.
-    """
+    """Cria e retorna uma conexão com o banco de dados."""
     return pymysql.connect(**DB_CONFIG)
 
 
-def criar_tabela():
-    """
-    Cria a tabela caso ela ainda não exista.
-    """
-    conexao = conectar()
-    cursor = conexao.cursor()
-
-    sql = """
-        CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
+def criar_tabelas():
+    """Cria as tabelas de simulações e de resultados, caso não existam."""
+    sql_simulacoes = """
+        CREATE TABLE IF NOT EXISTS simulacoes_bacterianas (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            populacaoperiodo BIGINT NOT NULL,
+            data_simulacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            populacao_inicial BIGINT UNSIGNED NOT NULL,
+            quantidade_periodos INT UNSIGNED NOT NULL,
             PRIMARY KEY (id)
         )
     """
 
+    sql_crescimento = """
+        CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            simulacao_id BIGINT UNSIGNED NOT NULL,
+            periodo INT UNSIGNED NOT NULL,
+            populacaoperiodo BIGINT UNSIGNED NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_simulacao_periodo (simulacao_id, periodo),
+            CONSTRAINT fk_crescimento_simulacao
+                FOREIGN KEY (simulacao_id)
+                REFERENCES simulacoes_bacterianas (id)
+                ON DELETE CASCADE
+        )
+    """
+
+    conexao = conectar()
+
     try:
-        cursor.execute(sql)
+        with conexao.cursor() as cursor:
+            cursor.execute(sql_simulacoes)
+            cursor.execute(sql_crescimento)
+
         conexao.commit()
-        print("Tabela verificada com sucesso!")
+        print("Tabelas verificadas com sucesso!")
+
+    except pymysql.MySQLError:
+        conexao.rollback()
+        raise
 
     finally:
-        cursor.close()
         conexao.close()
 
 
-def inserir_dados(valor):
-    """
-    Insere um valor na tabela.
-    """
-    conexao = conectar()
-    cursor = conexao.cursor()
+def registrar_simulacao(populacao_inicial, quantidade_periodos, populacoes):
+    """Registra uma simulação e os valores calculados para cada período."""
+    if len(populacoes) != quantidade_periodos:
+        raise ValueError(
+            "A quantidade de valores deve corresponder à quantidade de períodos."
+        )
 
+    sql_simulacao = """
+        INSERT INTO simulacoes_bacterianas (
+            populacao_inicial,
+            quantidade_periodos
+        )
+        VALUES (%s, %s)
+    """
+
+    sql_periodos = """
+        INSERT INTO crescimento_bacteriano (
+            simulacao_id,
+            periodo,
+            populacaoperiodo
+        )
+        VALUES (%s, %s, %s)
+    """
+
+    conexao = conectar()
+
+    try:
+        with conexao.cursor() as cursor:
+            cursor.execute(
+                sql_simulacao,
+                (populacao_inicial, quantidade_periodos),
+            )
+            simulacao_id = cursor.lastrowid
+
+            registros = [
+                (simulacao_id, periodo, populacao)
+                for periodo, populacao in enumerate(populacoes, start=1)
+            ]
+            cursor.executemany(sql_periodos, registros)
+
+        conexao.commit()
+        print(f"Simulação {simulacao_id} registrada com sucesso!")
+        return simulacao_id
+
+    except pymysql.MySQLError:
+        conexao.rollback()
+        raise
+
+    finally:
+        conexao.close()
+
+
+def mostrar_dados(simulacao_id):
+    """Mostra os dados e os resultados de uma simulação."""
     sql = """
-        INSERT INTO crescimento_bacteriano(populacaoperiodo)
-        VALUES (%s)
+        SELECT
+            s.id,
+            s.data_simulacao,
+            s.populacao_inicial,
+            s.quantidade_periodos,
+            c.periodo,
+            c.populacaoperiodo
+        FROM simulacoes_bacterianas AS s
+        INNER JOIN crescimento_bacteriano AS c
+            ON c.simulacao_id = s.id
+        WHERE s.id = %s
+        ORDER BY c.periodo
     """
 
-    try:
-        cursor.execute(sql, (valor,))
-        conexao.commit()
-        print(f"Valor {valor} inserido com sucesso!")
-
-    except pymysql.MySQLError as erro:
-        conexao.rollback()
-        print(f"Erro ao inserir dados: {erro}")
-
-    finally:
-        cursor.close()
-        conexao.close()
-
-
-def mostrar_dados():
-    """
-    Mostra todos os dados da tabela.
-    """
     conexao = conectar()
-    cursor = conexao.cursor()
-
-    sql = "SELECT populacaoperiodo FROM crescimento_bacteriano ORDER BY id"
 
     try:
-        cursor.execute(sql)
-        resultados = cursor.fetchall()
+        with conexao.cursor() as cursor:
+            cursor.execute(sql, (simulacao_id,))
+            resultados = cursor.fetchall()
 
-        print("\nDados da tabela:\n")
+        if not resultados:
+            print(f"Nenhum resultado encontrado para a simulação {simulacao_id}.")
+            return
 
-        for row in resultados:
-            print(f"Valor: {row[0]}")
+        primeiro = resultados[0]
+        print(f"\nSimulação: {primeiro[0]}")
+        print(f"Data: {primeiro[1]}")
+        print(f"População inicial: {primeiro[2]}")
+        print(f"Quantidade de períodos: {primeiro[3]}")
+        print("\nResultados:")
 
-    except pymysql.MySQLError as erro:
-        print(f"Erro ao buscar dados: {erro}")
-
-    finally:
-        cursor.close()
-        conexao.close()
-
-
-def limpar_tabela():
-    """
-    Limpa todos os dados da tabela.
-    """
-    conexao = conectar()
-    cursor = conexao.cursor()
-
-    sql = "TRUNCATE TABLE crescimento_bacteriano"
-
-    try:
-        cursor.execute(sql)
-        conexao.commit()
-        print("Tabela limpa com sucesso!")
-
-    except pymysql.MySQLError as erro:
-        conexao.rollback()
-        print(f"Erro ao limpar tabela: {erro}")
+        for resultado in resultados:
+            print(f"Período {resultado[4]}: {resultado[5]}")
 
     finally:
-        cursor.close()
         conexao.close()
-
-
-def inserir_lista(lista):
-    """
-    Insere todos os valores da lista no banco.
-    """
-    for valor in lista:
-        print(f"Inserindo: {valor}")
-        inserir_dados(valor)
-
-
-def tamanho_lista(lista):
-    """
-    Retorna o tamanho da lista.
-    """
-    return len(lista)
 
 
 if __name__ == "__main__":
+    populacao_inicial = 5
+    quantidade_periodos = 10
 
-    # Gera a lista de bactérias
-    lista = calcula_bacterias(5)
+    populacoes = calcula_bacterias(
+        populacao_inicial,
+        quantidade_periodos,
+    )
 
     print("\nLista gerada:")
-    print(lista)
+    print(populacoes)
+    print(f"\nTamanho da lista: {len(populacoes)}")
 
-    print(f"\nTamanho da lista: {tamanho_lista(lista)}")
-
-    # Cria a tabela e limpa os registros antes de inserir novos dados
-    criar_tabela()
-    limpar_tabela()
-
-    # Insere os dados no banco
-    inserir_lista(lista)
-
-    # Mostra os dados inseridos
-    mostrar_dados()
+    criar_tabelas()
+    nova_simulacao_id = registrar_simulacao(
+        populacao_inicial,
+        quantidade_periodos,
+        populacoes,
+    )
+    mostrar_dados(nova_simulacao_id)
