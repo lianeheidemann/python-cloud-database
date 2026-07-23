@@ -34,4 +34,4 @@ jobs:
           pip install pymysql python-dotenv cryptography pytest
 
       - name: Testar conexão SSL com a Aiven
-        run: python -m pytest -q tests
+        run: python -m pytest -q -s tests
