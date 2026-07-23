@@ -305,7 +305,7 @@ dos períodos relacionados ocorre pela regra `ON DELETE CASCADE`.
 | Workflow | Acionamento | Verificação |
 | --- | --- | --- |
 | `python-checks.yml` | Push, pull request ou execução manual | Compila `main.py` e `calculo.py` para detectar erros de sintaxe |
-| `aiven-connection.yml` | Execução manual | Testa a conexão e a integridade do modelo relacional na Aiven |
+| `aiven-connection.yml` | Todo push ou execução manual | Testa a conexão e a integridade do modelo relacional na Aiven |
 
 Para executar o teste da Aiven:
 
