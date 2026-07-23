@@ -22,7 +22,7 @@ MySQL em nuvem. A aplicação:
 
 1. calcula uma sequência de crescimento bacteriano;
 2. estabelece uma conexão SSL com a Aiven;
-3. cria a tabela `minhaTabela`, caso ela ainda não exista;
+3. cria a tabela `crescimento_bacteriano`, caso ela ainda não exista;
 4. remove os registros da execução anterior;
 5. insere a nova sequência;
 6. consulta e exibe os valores armazenados.
@@ -74,9 +74,9 @@ períodos:
 A aplicação cria a tabela principal com a seguinte estrutura:
 
 ```sql
-CREATE TABLE IF NOT EXISTS minhaTabela (
+CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    valores BIGINT NOT NULL,
+    populacaoperiodo BIGINT NOT NULL,
     PRIMARY KEY (id)
 );
 ```
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS minhaTabela (
 | Coluna | Tipo | Descrição |
 | --- | --- | --- |
 | `id` | `BIGINT UNSIGNED` | Identificador único e auto-incrementável |
-| `valores` | `BIGINT` | População calculada em cada período |
+| `populacaoperiodo` | `BIGINT` | População calculada em cada período |
 
 ## Estrutura do projeto
 
@@ -208,7 +208,7 @@ Para consultar os registros no MySQL Workbench:
 
 ```sql
 SELECT *
-FROM defaultdb.minhaTabela
+FROM defaultdb.crescimento_bacteriano
 ORDER BY id;
 ```
 
@@ -235,7 +235,7 @@ Registros após a exclusão: 0
 2 passed
 ```
 
-Os testes não modificam a tabela principal `minhaTabela`.
+Os testes não modificam a tabela principal `crescimento_bacteriano`.
 
 ### GitHub Actions
 
@@ -275,7 +275,7 @@ não uma credencial secreta.
 - não grave senhas diretamente no código ou no workflow.
 
 > [!WARNING]
-> A execução de `main.py` chama `TRUNCATE TABLE minhaTabela` antes de inserir a
+> A execução de `main.py` chama `TRUNCATE TABLE crescimento_bacteriano` antes de inserir a
 > nova sequência. Isso remove todos os registros anteriores da tabela principal.
 
 ## Solução de problemas
