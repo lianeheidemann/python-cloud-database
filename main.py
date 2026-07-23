@@ -10,7 +10,6 @@ load_dotenv()
 
 # Configurações do banco de dados Aiven
 BASE_DIR = Path(__file__).resolve().parent
-SSL_CA = os.getenv("DB_SSL_CA")
 
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
@@ -24,25 +23,73 @@ DB_CONFIG = {
     "write_timeout": 10,
 }
 
-if SSL_CA:
-    certificado = Path(SSL_CA)
+
+def obter_certificado_ssl():
+    """Retorna o certificado SSL configurado ou interrompe a execução."""
+    caminho_certificado = os.getenv("DB_SSL_CA")
+
+    if not caminho_certificado:
+        raise ValueError(
+            "DB_SSL_CA é obrigatório para conectar com SSL à Aiven."
+        )
+
+    certificado = Path(caminho_certificado)
 
     if not certificado.is_absolute():
         certificado = BASE_DIR / certificado
 
-    DB_CONFIG["ssl"] = {
-        "ca": str(certificado),
-        "check_hostname": True,
-    }
+    certificado = certificado.resolve()
+
+    if not certificado.is_file():
+        raise FileNotFoundError(
+            f"Certificado SSL não encontrado: {certificado}"
+        )
+
+    return certificado
 
 
 def conectar():
-    """Cria e retorna uma conexão com o banco de dados."""
-    return pymysql.connect(**DB_CONFIG)
+    """Cria uma conexão com SSL obrigatório e validação do servidor."""
+    certificado = obter_certificado_ssl()
+    configuracao = DB_CONFIG.copy()
+    configuracao["ssl"] = {
+        "ca": str(certificado),
+        "check_hostname": True,
+    }
+    return pymysql.connect(**configuracao)
+
+
+def migrar_coluna_populacao(cursor):
+    """Renomeia a coluna legada sem perder os dados existentes."""
+    cursor.execute(
+        """
+        SELECT COLUMN_NAME
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'crescimento_bacteriano'
+          AND COLUMN_NAME IN ('populacaoperiodo', 'populacao_periodo')
+        """
+    )
+    colunas = {linha[0] for linha in cursor.fetchall()}
+
+    if "populacaoperiodo" in colunas and "populacao_periodo" in colunas:
+        raise RuntimeError(
+            "As colunas populacaoperiodo e populacao_periodo coexistem. "
+            "Revise a estrutura antes de continuar."
+        )
+
+    if "populacaoperiodo" in colunas:
+        cursor.execute(
+            """
+            ALTER TABLE crescimento_bacteriano
+            RENAME COLUMN populacaoperiodo TO populacao_periodo
+            """
+        )
+        print("Coluna populacaoperiodo migrada para populacao_periodo.")
 
 
 def criar_tabelas():
-    """Cria as tabelas de simulações e de resultados, caso não existam."""
+    """Cria as tabelas e aplica migrações compatíveis, caso necessário."""
     sql_simulacoes = """
         CREATE TABLE IF NOT EXISTS simulacoes_bacterianas (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -58,7 +105,7 @@ def criar_tabelas():
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             simulacao_id BIGINT UNSIGNED NOT NULL,
             periodo INT UNSIGNED NOT NULL,
-            populacaoperiodo BIGINT UNSIGNED NOT NULL,
+            populacao_periodo BIGINT UNSIGNED NOT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY uq_simulacao_periodo (simulacao_id, periodo),
             CONSTRAINT fk_crescimento_simulacao
@@ -74,11 +121,12 @@ def criar_tabelas():
         with conexao.cursor() as cursor:
             cursor.execute(sql_simulacoes)
             cursor.execute(sql_crescimento)
+            migrar_coluna_populacao(cursor)
 
         conexao.commit()
         print("Tabelas verificadas com sucesso!")
 
-    except pymysql.MySQLError:
+    except (pymysql.MySQLError, RuntimeError):
         conexao.rollback()
         raise
 
@@ -105,7 +153,7 @@ def registrar_simulacao(populacao_inicial, quantidade_periodos, populacoes):
         INSERT INTO crescimento_bacteriano (
             simulacao_id,
             periodo,
-            populacaoperiodo
+            populacao_periodo
         )
         VALUES (%s, %s, %s)
     """
@@ -147,7 +195,7 @@ def mostrar_dados(simulacao_id):
             s.populacao_inicial,
             s.quantidade_periodos,
             c.periodo,
-            c.populacaoperiodo
+            c.populacao_periodo
         FROM simulacoes_bacterianas AS s
         INNER JOIN crescimento_bacteriano AS c
             ON c.simulacao_id = s.id
