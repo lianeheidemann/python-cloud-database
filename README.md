@@ -63,7 +63,7 @@ python -m venv .venv
 ### 3. Instale as dependências
 
 ```powershell
-python -m pip install pymysql python-dotenv cryptography
+python -m pip install -r requirements.txt
 ```
 
 ### 4. Configure a conexão
@@ -116,6 +116,7 @@ python_cloud_database/
 ├── ca.pem                        # certificado CA da Aiven
 ├── calculo.py                    # gera os valores armazenados
 ├── main.py                       # conexão e operações no MySQL
+├── requirements.txt              # dependências com versões fixadas
 └── README.md
 ```
 
@@ -126,4 +127,4 @@ versionadas.
 > Cada execução remove os registros anteriores com `TRUNCATE TABLE`.
 
 Credenciais e Service URI nunca devem ser enviadas ao GitHub. Consulte o
-[guia de configuração](assets/CONFIGURACAO_MYSQL.md) para instruções detalhadas.
+[guia de configuração](docs/configuracao_mysql.md) para instruções detalhadas.
