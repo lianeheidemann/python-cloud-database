@@ -46,7 +46,7 @@ períodos:
 - geração determinística dos dados de crescimento;
 - validação de população inicial e quantidade de períodos;
 - configuração por variáveis de ambiente;
-- conexão MySQL com verificação SSL pelo certificado CA;
+- conexão MySQL com SSL obrigatório e validação da existência do certificado CA;
 - criação automática das tabelas e de suas chaves primária e estrangeira;
 - histórico separado de cada simulação;
 - inserção parametrizada dos períodos em uma única transação;
@@ -89,7 +89,7 @@ erDiagram
         BIGINT id PK
         BIGINT simulacao_id FK
         INT periodo
-        BIGINT populacaoperiodo
+        BIGINT populacao_periodo
     }
 ```
 
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     simulacao_id BIGINT UNSIGNED NOT NULL,
     periodo INT UNSIGNED NOT NULL,
-    populacaoperiodo BIGINT UNSIGNED NOT NULL,
+    populacao_periodo BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uq_simulacao_periodo (simulacao_id, periodo),
     CONSTRAINT fk_crescimento_simulacao
@@ -115,6 +115,21 @@ CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
         ON DELETE CASCADE
 );
 ```
+
+
+### Migração da coluna anterior
+
+Ao iniciar, a aplicação consulta `information_schema.COLUMNS`. Se encontrar a
+coluna legada `populacaoperiodo`, executa automaticamente:
+
+```sql
+ALTER TABLE crescimento_bacteriano
+RENAME COLUMN populacaoperiodo TO populacao_periodo;
+```
+
+A operação preserva os registros existentes. Se os dois nomes forem encontrados
+simultaneamente, a aplicação interrompe a execução para evitar uma migração
+ambígua.
 
 ## Estrutura do projeto
 
@@ -211,9 +226,11 @@ DB_NAME=defaultdb
 DB_SSL_CA=ca.pem
 ```
 
-Salve o certificado da Aiven como `ca.pem` na raiz do projeto. Consulte o
-[guia detalhado de configuração](docs/configuracao_mysql.md) para configurar
-também o MySQL Workbench.
+Salve o certificado da Aiven como `ca.pem` na raiz do projeto. A variável
+`DB_SSL_CA` é obrigatória: se estiver ausente ou apontar para um arquivo
+inexistente, o programa interromperá a execução antes de tentar a conexão.
+Consulte o [guia detalhado de configuração](docs/configuracao_mysql.md) para
+configurar também o MySQL Workbench.
 
 ## Execução
 
@@ -243,7 +260,7 @@ SELECT
     s.populacao_inicial,
     s.quantidade_periodos,
     c.periodo,
-    c.populacaoperiodo
+    c.populacao_periodo
 FROM defaultdb.simulacoes_bacterianas AS s
 INNER JOIN defaultdb.crescimento_bacteriano AS c
     ON c.simulacao_id = s.id
@@ -276,7 +293,7 @@ Saída resumida esperada:
 Tabelas verificadas com sucesso!
 Simulação ... registrada com sucesso!
 Simulação ... registrada com sucesso!
-2 passed
+4 passed
 ```
 
 O teste insere temporariamente duas simulações no modelo real e remove, no bloco
