@@ -77,10 +77,27 @@ def test_modelo_relacional_aiven():
                     (segunda_id, segunda_populacao, 2),
                 )
 
+                # Confirma que a coluna nova existe e a antiga foi removida
+                cursor.execute(
+                    """
+                    SELECT COLUMN_NAME
+                    FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'crescimento_bacteriano'
+                      AND COLUMN_NAME IN (
+                          'populacaoperiodo',
+                          'populacao_periodo'
+                      )
+                    """
+                )
+                assert {linha[0] for linha in cursor.fetchall()} == {
+                    "populacao_periodo"
+                }
+
                 # Confirma os períodos registrados em cada simulação
                 cursor.execute(
                     """
-                    SELECT periodo, populacaoperiodo
+                    SELECT periodo, populacao_periodo
                     FROM crescimento_bacteriano
                     WHERE simulacao_id = %s
                     ORDER BY periodo
@@ -91,7 +108,7 @@ def test_modelo_relacional_aiven():
 
                 cursor.execute(
                     """
-                    SELECT periodo, populacaoperiodo
+                    SELECT periodo, populacao_periodo
                     FROM crescimento_bacteriano
                     WHERE simulacao_id = %s
                     ORDER BY periodo
@@ -115,7 +132,7 @@ def test_modelo_relacional_aiven():
                         INSERT INTO crescimento_bacteriano (
                             simulacao_id,
                             periodo,
-                            populacaoperiodo
+                            populacao_periodo
                         )
                         VALUES (%s, %s, %s)
                         """,
