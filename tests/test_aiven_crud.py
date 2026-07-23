@@ -23,6 +23,7 @@ def test_crud_completo_aiven():
                 )
                 """
             )
+            print(f"Tabela criada: {nome_tabela}")
 
             # Insere um registro
             cursor.execute(
@@ -37,6 +38,9 @@ def test_crud_completo_aiven():
                 (identificador,),
             )
             assert cursor.fetchone() == (valor_teste,)
+            resultado = cursor.fetchone()
+            print(f"Registro consultado: {resultado}")
+            assert resultado == (valor_teste,)
 
             # Exclui o registro
             cursor.execute(
