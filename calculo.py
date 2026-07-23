@@ -16,7 +16,3 @@ def calcula_bacterias(populacao_inicial, periodos=10):
 
     return [populacao_inicial * (2**periodo) for periodo in range(periodos)]
 
-
-def calcula_Max(valores):
-    """Retorna o maior valor de uma coleção."""
-    return max(valores)
