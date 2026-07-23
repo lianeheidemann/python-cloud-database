@@ -53,7 +53,7 @@ períodos:
 - consulta ordenada dos resultados de cada simulação;
 - rollback em falhas de escrita;
 - teste real de conexão com `SELECT 1`;
-- teste real de criação, inserção, consulta e exclusão na Aiven;
+- teste real das tabelas, da chave estrangeira, do histórico e do `ON DELETE CASCADE` na Aiven;
 - limpeza automática dos recursos temporários criados pelos testes;
 - verificação automática de sintaxe com GitHub Actions.
 
@@ -128,7 +128,7 @@ python_cloud_database/
 │   └── configuracao_mysql.md         # configuração da Aiven e do Workbench
 ├── tests/
 │   ├── test_aiven_connection.py      # teste SSL com SELECT 1
-│   └── test_aiven_crud.py            # teste CRUD em tabela temporária
+│   └── test_aiven_crud.py            # teste de integração do modelo real
 ├── .env.example                      # modelo das variáveis de ambiente
 ├── .gitignore                        # arquivos ignorados pelo Git
 ├── ca.pem                            # certificado CA da Aiven
@@ -260,27 +260,35 @@ Os testes usam uma conexão real com a Aiven. Configure o `.env` e execute:
 python -m pytest -q -s tests
 ```
 
-O primeiro teste valida a conexão SSL com `SELECT 1`. O segundo cria uma tabela
-com nome aleatório, insere e consulta um registro, exclui esse registro e remove
-a tabela no bloco `finally`.
+O primeiro teste valida a conexão SSL com `SELECT 1`. O segundo valida o modelo
+relacional usado pela aplicação:
 
-Saída esperada:
+- confirma a existência de `simulacoes_bacterianas` e `crescimento_bacteriano`;
+- registra duas simulações diferentes;
+- comprova que o histórico da primeira permanece após o segundo registro;
+- verifica a chave estrangeira;
+- verifica o `ON DELETE CASCADE`;
+- confirma que excluir uma simulação não afeta a outra.
+
+Saída resumida esperada:
 
 ```text
-Tabela criada: github_actions_test_...
-Registro consultado: ('teste-crud-github-actions',)
-Registros após a exclusão: 0
+Tabelas verificadas com sucesso!
+Simulação ... registrada com sucesso!
+Simulação ... registrada com sucesso!
 2 passed
 ```
 
-Os testes não modificam as tabelas `simulacoes_bacterianas` e `crescimento_bacteriano`.
+O teste insere temporariamente duas simulações no modelo real e remove, no bloco
+`finally`, somente os registros criados por sua própria execução. A exclusão
+dos períodos relacionados ocorre pela regra `ON DELETE CASCADE`.
 
 ### GitHub Actions
 
 | Workflow | Acionamento | Verificação |
 | --- | --- | --- |
 | `python-checks.yml` | Push, pull request ou execução manual | Compila `main.py` e `calculo.py` para detectar erros de sintaxe |
-| `aiven-connection.yml` | Execução manual | Executa os testes reais de conexão e CRUD na Aiven |
+| `aiven-connection.yml` | Execução manual | Testa a conexão e a integridade do modelo relacional na Aiven |
 
 Para executar o teste da Aiven:
 
