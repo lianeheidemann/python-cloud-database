@@ -48,7 +48,10 @@ def test_crud_completo_aiven():
                 (identificador,),
             )
             conexao.commit()
-
+            quantidade = cursor.fetchone()[0]
+            print(f"Registros após a exclusão: {quantidade}")
+            assert quantidade == 0
+            
             # Confirma que foi excluído
             cursor.execute(
                 f"SELECT COUNT(*) FROM `{nome_tabela}` WHERE id = %s",
