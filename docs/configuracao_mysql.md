@@ -71,18 +71,33 @@ python main.py
 O programa:
 
 1. conecta ao MySQL da Aiven usando SSL;
-2. cria `crescimento_bacteriano` se necessário;
-3. limpa os registros anteriores;
-4. insere os valores do crescimento bacteriano;
-5. consulta e mostra os valores no terminal.
+2. cria `simulacoes_bacterianas` e `crescimento_bacteriano`, se necessário;
+3. registra a data, a população inicial e a quantidade de períodos;
+4. insere os resultados vinculados à nova simulação;
+5. consulta e mostra somente a simulação recém-registrada.
 
-A tabela criada possui a seguinte estrutura:
+As tabelas possuem a seguinte estrutura:
 
 ```sql
+CREATE TABLE IF NOT EXISTS simulacoes_bacterianas (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    data_simulacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    populacao_inicial BIGINT UNSIGNED NOT NULL,
+    quantidade_periodos INT UNSIGNED NOT NULL,
+    PRIMARY KEY (id)
+);
+
 CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    populacaoperiodo BIGINT NOT NULL,
-    PRIMARY KEY (id)
+    simulacao_id BIGINT UNSIGNED NOT NULL,
+    periodo INT UNSIGNED NOT NULL,
+    populacaoperiodo BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_simulacao_periodo (simulacao_id, periodo),
+    CONSTRAINT fk_crescimento_simulacao
+        FOREIGN KEY (simulacao_id)
+        REFERENCES simulacoes_bacterianas (id)
+        ON DELETE CASCADE
 );
 ```
 
@@ -116,9 +131,17 @@ aponta para o MySQL instalado no computador, não para a Aiven.
 No MySQL Workbench conectado à Aiven, execute:
 
 ```sql
-SELECT *
-FROM defaultdb.crescimento_bacteriano
-ORDER BY id;
+SELECT
+    s.id AS simulacao,
+    s.data_simulacao,
+    s.populacao_inicial,
+    s.quantidade_periodos,
+    c.periodo,
+    c.populacaoperiodo
+FROM defaultdb.simulacoes_bacterianas AS s
+INNER JOIN defaultdb.crescimento_bacteriano AS c
+    ON c.simulacao_id = s.id
+ORDER BY s.id DESC, c.periodo;
 ```
 
 ## Problemas comuns
