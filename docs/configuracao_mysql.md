@@ -59,6 +59,9 @@ DB_SSL_CA=ca.pem
 Use no `DB_NAME` exatamente o valor exibido no campo **Database** da Aiven.
 O nome inicial normalmente é `defaultdb`.
 
+`DB_SSL_CA` é obrigatório. A aplicação interrompe a execução se essa variável
+não estiver definida ou se o caminho não apontar para um arquivo existente.
+
 ## 5. Executar o programa
 
 Ative o ambiente virtual e execute:
@@ -91,7 +94,7 @@ CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     simulacao_id BIGINT UNSIGNED NOT NULL,
     periodo INT UNSIGNED NOT NULL,
-    populacaoperiodo BIGINT UNSIGNED NOT NULL,
+    populacao_periodo BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uq_simulacao_periodo (simulacao_id, periodo),
     CONSTRAINT fk_crescimento_simulacao
@@ -100,6 +103,10 @@ CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
         ON DELETE CASCADE
 );
 ```
+
+Se a tabela tiver sido criada pela versão anterior, a aplicação renomeará
+automaticamente `populacaoperiodo` para `populacao_periodo`, preservando os
+dados existentes.
 
 ## 6. Configurar o MySQL Workbench
 
@@ -137,7 +144,7 @@ SELECT
     s.populacao_inicial,
     s.quantidade_periodos,
     c.periodo,
-    c.populacaoperiodo
+    c.populacao_periodo
 FROM defaultdb.simulacoes_bacterianas AS s
 INNER JOIN defaultdb.crescimento_bacteriano AS c
     ON c.simulacao_id = s.id
@@ -167,9 +174,9 @@ testadas até MySQL 8.0. Para consultas comuns, selecione **Continue Anyway**.
 A Aiven exige chave primária nas tabelas. O projeto já cria a coluna `id` como
 chave primária; use a versão atual de `main.py`.
 
-### Certificado não encontrado
+### Certificado não encontrado ou DB_SSL_CA ausente
 
-Confirme que `ca.pem` está na raiz do projeto e que o `.env` contém:
+A conexão SSL é obrigatória. Confirme que `ca.pem` está na raiz do projeto e que o `.env` contém:
 
 ```env
 DB_SSL_CA=ca.pem
