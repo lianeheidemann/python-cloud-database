@@ -104,6 +104,7 @@ python_cloud_database/
 ├── ca.pem                            # certificado CA da Aiven
 ├── calculo.py                        # cálculo do crescimento bacteriano
 ├── main.py                           # conexão e operações no MySQL
+├── requirements.txt                   # dependências com versões fixadas
 ├── README.md                         # documentação atual
 └── readme_v2.md                      # documentação ampliada
 ```
@@ -149,7 +150,7 @@ source .venv/bin/activate
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install pymysql python-dotenv cryptography pytest
+python -m pip install -r requirements.txt
 ```
 
 ## Configuração da Aiven
@@ -290,7 +291,6 @@ instruções para:
 
 ## Melhorias futuras
 
-- adicionar um arquivo `requirements.txt`;
 - criar testes unitários para `calculo.py`;
 - validar as variáveis de ambiente antes da conexão;
 - substituir os `print()` por logs estruturados;
