@@ -33,31 +33,31 @@ def test_crud_completo_aiven():
             conexao.commit()
 
             # Consulta e verifica o registro
-cursor.execute(
-    f"SELECT valor FROM `{nome_tabela}` WHERE id = %s",
-    (identificador,),
-)
+            cursor.execute(
+                f"SELECT valor FROM `{nome_tabela}` WHERE id = %s",
+                (identificador,),
+            )
 
-resultado = cursor.fetchone()
-print(f"Registro consultado: {resultado}")
-assert resultado == (valor_teste,)
+            resultado = cursor.fetchone()
+            print(f"Registro consultado: {resultado}")
+            assert resultado == (valor_teste,)
 
             # Exclui o registro
-cursor.execute(
-    f"DELETE FROM `{nome_tabela}` WHERE id = %s",
-    (identificador,),
-)
-conexao.commit()
+            cursor.execute(
+                f"DELETE FROM `{nome_tabela}` WHERE id = %s",
+                (identificador,),
+            )
+            conexao.commit()
 
-# Confirma que o registro foi excluído
-cursor.execute(
-    f"SELECT COUNT(*) FROM `{nome_tabela}` WHERE id = %s",
-    (identificador,),
-)
+            # Confirma que o registro foi excluído
+            cursor.execute(
+                f"SELECT COUNT(*) FROM `{nome_tabela}` WHERE id = %s",
+                (identificador,),
+            )
 
-quantidade = cursor.fetchone()[0]
-print(f"Registros após a exclusão: {quantidade}")
-assert quantidade == 0
+            quantidade = cursor.fetchone()[0]
+            print(f"Registros após a exclusão: {quantidade}")
+            assert quantidade == 0
 
     finally:
         # Remove somente a tabela temporária criada pelo teste
