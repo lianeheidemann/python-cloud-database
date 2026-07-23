@@ -51,9 +51,9 @@ def criar_tabela():
     cursor = conexao.cursor()
 
     sql = """
-        CREATE TABLE IF NOT EXISTS minhaTabela (
+        CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            valores BIGINT NOT NULL,
+            populacaoperiodo BIGINT NOT NULL,
             PRIMARY KEY (id)
         )
     """
@@ -76,7 +76,7 @@ def inserir_dados(valor):
     cursor = conexao.cursor()
 
     sql = """
-        INSERT INTO minhaTabela(valores)
+        INSERT INTO crescimento_bacteriano(populacaoperiodo)
         VALUES (%s)
     """
 
@@ -101,7 +101,7 @@ def mostrar_dados():
     conexao = conectar()
     cursor = conexao.cursor()
 
-    sql = "SELECT valores FROM minhaTabela ORDER BY id"
+    sql = "SELECT populacaoperiodo FROM crescimento_bacteriano ORDER BY id"
 
     try:
         cursor.execute(sql)
@@ -127,7 +127,7 @@ def limpar_tabela():
     conexao = conectar()
     cursor = conexao.cursor()
 
-    sql = "TRUNCATE TABLE minhaTabela"
+    sql = "TRUNCATE TABLE crescimento_bacteriano"
 
     try:
         cursor.execute(sql)
