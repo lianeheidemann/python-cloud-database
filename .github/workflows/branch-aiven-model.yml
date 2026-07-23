@@ -1,0 +1,44 @@
+name: Teste do novo modelo na Aiven
+
+on:
+  push:
+    branches:
+      - renomear-tabela-coluna
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teste-modelo-aiven-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testar-modelo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      DB_HOST: ${{ secrets.AIVEN_DB_HOST }}
+      DB_PORT: ${{ secrets.AIVEN_DB_PORT }}
+      DB_USER: ${{ secrets.AIVEN_DB_USER }}
+      DB_PASSWORD: ${{ secrets.AIVEN_DB_PASSWORD }}
+      DB_NAME: ${{ secrets.AIVEN_DB_NAME }}
+      DB_SSL_CA: ca.pem
+
+    steps:
+      - name: Baixar o código da branch
+        uses: actions/checkout@v7
+
+      - name: Configurar Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Instalar dependências fixadas
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Testar conexão e modelo relacional
+        run: python -m pytest -q -s tests
