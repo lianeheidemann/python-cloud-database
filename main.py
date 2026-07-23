@@ -1,5 +1,6 @@
-# Utilizando o Servidor: db4free.net
 import os
+from pathlib import Path
+
 import pymysql
 from calculo import calcula_bacterias
 from dotenv import load_dotenv
@@ -7,13 +8,32 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configurações do banco de dados
+# Configurações do banco de dados Aiven
+BASE_DIR = Path(__file__).resolve().parent
+SSL_CA = os.getenv("DB_SSL_CA")
+
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
+    "port": int(os.getenv("DB_PORT", "3306")),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"),
-    "database": os.getenv("DB_NAME")
+    "database": os.getenv("DB_NAME", "defaultdb"),
+    "charset": "utf8mb4",
+    "connect_timeout": 10,
+    "read_timeout": 10,
+    "write_timeout": 10,
 }
+
+if SSL_CA:
+    certificado = Path(SSL_CA)
+
+    if not certificado.is_absolute():
+        certificado = BASE_DIR / certificado
+
+    DB_CONFIG["ssl"] = {
+        "ca": str(certificado),
+        "check_hostname": True,
+    }
 
 
 def conectar():
@@ -21,6 +41,31 @@ def conectar():
     Cria e retorna uma conexão com o banco de dados.
     """
     return pymysql.connect(**DB_CONFIG)
+
+
+def criar_tabela():
+    """
+    Cria a tabela caso ela ainda não exista.
+    """
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    sql = """
+        CREATE TABLE IF NOT EXISTS minhaTabela (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            valores BIGINT NOT NULL,
+            PRIMARY KEY (id)
+        )
+    """
+
+    try:
+        cursor.execute(sql)
+        conexao.commit()
+        print("Tabela verificada com sucesso!")
+
+    finally:
+        cursor.close()
+        conexao.close()
 
 
 def inserir_dados(valor):
@@ -56,7 +101,7 @@ def mostrar_dados():
     conexao = conectar()
     cursor = conexao.cursor()
 
-    sql = "SELECT * FROM minhaTabela"
+    sql = "SELECT valores FROM minhaTabela ORDER BY id"
 
     try:
         cursor.execute(sql)
@@ -124,7 +169,8 @@ if __name__ == "__main__":
 
     print(f"\nTamanho da lista: {tamanho_lista(lista)}")
 
-    # Limpa tabela antes de inserir novos dados
+    # Cria a tabela e limpa os registros antes de inserir novos dados
+    criar_tabela()
     limpar_tabela()
 
     # Insere os dados no banco

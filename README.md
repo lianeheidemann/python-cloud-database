@@ -1,105 +1,127 @@
-# Sistema de Armazenamento de Dados com Python e MySQL
-<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"/> <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white"/> <img src="https://img.shields.io/badge/PyMySQL-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
+<div align="center">
 
-Projeto desenvolvido em Python para realizar operações de **armazenamento, leitura e limpeza de dados** em um banco de dados MySQL hospedado online.
+# Python Cloud Database
 
----
+Aplicação Python que gera dados de crescimento bacteriano e os armazena em um
+banco MySQL na Aiven.
 
-## Como executar o projeto
+![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Aiven](https://img.shields.io/badge/Aiven-Cloud-FF3554?style=for-the-badge&logo=aiven&logoColor=white)
+![PyMySQL](https://img.shields.io/badge/PyMySQL-Driver-00618A?style=for-the-badge&logo=python&logoColor=white)
 
-### Pré-requisitos
+</div>
 
-Antes de iniciar, instale:
+## Sobre
 
-* Python 3
-* MySQL Server
-* MySQL Workbench
-* Visual Studio Code
+O projeto usa Python, PyMySQL e SSL para conectar-se ao MySQL na nuvem. A
+aplicação cria a tabela automaticamente, limpa os registros anteriores, insere
+os novos valores e consulta o resultado.
 
-### 1. Clone o repositório
+```text
+Python → PyMySQL/SSL → Aiven MySQL
+```
 
-```bash
+## Tecnologias
+
+| Tecnologia | Finalidade |
+| --- | --- |
+| Python | Lógica da aplicação |
+| PyMySQL | Driver de conexão com o MySQL |
+| python-dotenv | Leitura das variáveis do `.env` |
+| cryptography | Suporte à autenticação segura |
+| MySQL | Armazenamento relacional |
+| Aiven | Hospedagem gerenciada do banco |
+
+
+## Pré-requisitos
+
+- Python 3;
+- Git;
+- conta na Aiven com um serviço **MySQL Free** ativo;
+- certificado CA fornecido pela Aiven;
+- MySQL Workbench para consultas gráficas.
+
+## Como executar
+
+### 1. Clone o projeto
+
+```powershell
 git clone https://github.com/lianeheidemann/python_cloud_database.git
 cd python_cloud_database
 ```
 
 ### 2. Crie o ambiente virtual
 
-No terminal do VS Code:
-
-```bash
-python -m venv .venv
-```
-
-No Windows, ative com:
-
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
 ### 3. Instale as dependências
 
-```bash
-pip install pymysql python-dotenv
+```powershell
+python -m pip install pymysql python-dotenv cryptography
 ```
 
-### 4. Configure o banco de dados
+### 4. Configure a conexão
 
-No MySQL Workbench, execute:
+Crie um serviço MySQL na [Aiven](https://console.aiven.io/), baixe o certificado
+CA e salve-o como `ca.pem` na raiz do projeto.
 
-```sql
-CREATE DATABASE python_cloud_database;
-
-USE python_cloud_database;
-
-CREATE TABLE minhaTabela (
-    valores BIGINT NOT NULL
-);
-```
-
-### 5. Configure as variáveis de ambiente
-
-Crie uma cópia do arquivo `.env.example` com o nome `.env`:
+Copie `.env.example` para `.env`:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Preencha o arquivo com os dados do seu MySQL local:
+Preencha o arquivo:
 
 ```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=sua_senha
-DB_NAME=python_cloud_database
+DB_HOST=host-da-aiven
+DB_PORT=porta-da-aiven
+DB_USER=usuario-da-aiven
+DB_PASSWORD="senha-da-aiven"
+DB_NAME=defaultdb
+DB_SSL_CA=ca.pem
 ```
 
-> O arquivo `.env` contém informações sensíveis e não deve ser enviado para o GitHub.
+### 5. Execute
 
-### 6. Execute o projeto
-
-```bash
+```powershell
 python main.py
 ```
 
-O programa irá:
+## Consultar os dados
 
-* gerar uma lista de valores;
-* limpar os registros existentes;
-* inserir os novos dados no MySQL;
-* consultar e exibir os registros no terminal.
+Use uma conexão Aiven no MySQL Workbench:
 
-### Estrutura esperada
+```sql
+SELECT *
+FROM defaultdb.minhaTabela
+ORDER BY id;
+```
+
+## Estrutura
 
 ```text
 python_cloud_database/
-├── .env
-├── .env.example
-├── .gitignore
-├── calculo.py
-├── main.py
+├── docs/
+│   └── configuracao_mysql.md
+├── .env                          # credenciais locais, não versionado
+├── .env.example                  # modelo das variáveis de ambiente
+├── .gitignore                    # regras de exclusão do Git
+├── ca.pem                        # certificado CA da Aiven
+├── calculo.py                    # gera os valores armazenados
+├── main.py                       # conexão e operações no MySQL
 └── README.md
 ```
 
-> O arquivo `calculo.py` deve conter a função `calcula_bacterias`, utilizada pelo arquivo `main.py`.
+As pastas `.venv/` e `__pycache__/` são geradas localmente e não são
+versionadas.
 
+> [!WARNING]
+> Cada execução remove os registros anteriores com `TRUNCATE TABLE`.
+
+Credenciais e Service URI nunca devem ser enviadas ao GitHub. Consulte o
+[guia de configuração](assets/CONFIGURACAO_MYSQL.md) para instruções detalhadas.
