@@ -71,7 +71,7 @@ python main.py
 O programa:
 
 1. conecta ao MySQL da Aiven usando SSL;
-2. cria `minhaTabela` se necessário;
+2. cria `crescimento_bacteriano` se necessário;
 3. limpa os registros anteriores;
 4. insere os valores do crescimento bacteriano;
 5. consulta e mostra os valores no terminal.
@@ -79,9 +79,9 @@ O programa:
 A tabela criada possui a seguinte estrutura:
 
 ```sql
-CREATE TABLE IF NOT EXISTS minhaTabela (
+CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    valores BIGINT NOT NULL,
+    populacaoperiodo BIGINT NOT NULL,
     PRIMARY KEY (id)
 );
 ```
@@ -117,7 +117,7 @@ No MySQL Workbench conectado à Aiven, execute:
 
 ```sql
 SELECT *
-FROM defaultdb.minhaTabela
+FROM defaultdb.crescimento_bacteriano
 ORDER BY id;
 ```
 
