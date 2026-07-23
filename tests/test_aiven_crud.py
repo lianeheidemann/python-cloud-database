@@ -1,68 +1,183 @@
-import uuid
+import pymysql
+import pytest
 
-from main import conectar
+from main import conectar, criar_tabelas, registrar_simulacao
 
 
-def test_crud_completo_aiven():
-    """Testa criação, inserção, consulta e exclusão na Aiven."""
-    nome_tabela = f"github_actions_test_{uuid.uuid4().hex}"
-    identificador = str(uuid.uuid4())
-    valor_teste = "teste-crud-github-actions"
-
-    conexao = conectar()
+def test_modelo_relacional_aiven():
+    """Valida o modelo real, o histórico, a chave estrangeira e o cascade."""
+    simulacao_ids = []
+    criar_tabelas()
 
     try:
-        with conexao.cursor() as cursor:
-            # Cria uma tabela exclusiva para esta execução
-            cursor.execute(
-                f"""
-                CREATE TABLE `{nome_tabela}` (
-                    id CHAR(36) NOT NULL,
-                    valor VARCHAR(100) NOT NULL,
-                    PRIMARY KEY (id)
+        primeira_populacao = 3
+        primeira_sequencia = [3, 6, 12]
+        primeira_id = registrar_simulacao(
+            primeira_populacao,
+            len(primeira_sequencia),
+            primeira_sequencia,
+        )
+        simulacao_ids.append(primeira_id)
+
+        segunda_populacao = 11
+        segunda_sequencia = [11, 22]
+        segunda_id = registrar_simulacao(
+            segunda_populacao,
+            len(segunda_sequencia),
+            segunda_sequencia,
+        )
+        simulacao_ids.append(segunda_id)
+
+        conexao = conectar()
+
+        try:
+            with conexao.cursor() as cursor:
+                # Confirma que as duas tabelas do modelo existem
+                cursor.execute(
+                    """
+                    SELECT TABLE_NAME
+                    FROM information_schema.TABLES
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME IN (
+                          'simulacoes_bacterianas',
+                          'crescimento_bacteriano'
+                      )
+                    """
                 )
-                """
-            )
-            print(f"Tabela criada: {nome_tabela}")
+                tabelas = {linha[0] for linha in cursor.fetchall()}
+                assert tabelas == {
+                    "simulacoes_bacterianas",
+                    "crescimento_bacteriano",
+                }
 
-            # Insere um registro
-            cursor.execute(
-                f"INSERT INTO `{nome_tabela}` (id, valor) VALUES (%s, %s)",
-                (identificador, valor_teste),
-            )
-            conexao.commit()
+                # Confirma a chave estrangeira e sua regra de exclusão
+                cursor.execute(
+                    """
+                    SELECT DELETE_RULE
+                    FROM information_schema.REFERENTIAL_CONSTRAINTS
+                    WHERE CONSTRAINT_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'crescimento_bacteriano'
+                      AND CONSTRAINT_NAME = 'fk_crescimento_simulacao'
+                    """
+                )
+                assert cursor.fetchone() == ("CASCADE",)
 
-            # Consulta e verifica o registro
-            cursor.execute(
-                f"SELECT valor FROM `{nome_tabela}` WHERE id = %s",
-                (identificador,),
-            )
+                # As duas simulações devem coexistir: o histórico foi preservado
+                cursor.execute(
+                    """
+                    SELECT id, populacao_inicial, quantidade_periodos
+                    FROM simulacoes_bacterianas
+                    WHERE id IN (%s, %s)
+                    ORDER BY id
+                    """,
+                    (primeira_id, segunda_id),
+                )
+                assert cursor.fetchall() == (
+                    (primeira_id, primeira_populacao, 3),
+                    (segunda_id, segunda_populacao, 2),
+                )
 
-            resultado = cursor.fetchone()
-            print(f"Registro consultado: {resultado}")
-            assert resultado == (valor_teste,)
+                # Confirma os períodos registrados em cada simulação
+                cursor.execute(
+                    """
+                    SELECT periodo, populacaoperiodo
+                    FROM crescimento_bacteriano
+                    WHERE simulacao_id = %s
+                    ORDER BY periodo
+                    """,
+                    (primeira_id,),
+                )
+                assert cursor.fetchall() == ((1, 3), (2, 6), (3, 12))
 
-            # Exclui o registro
-            cursor.execute(
-                f"DELETE FROM `{nome_tabela}` WHERE id = %s",
-                (identificador,),
-            )
-            conexao.commit()
+                cursor.execute(
+                    """
+                    SELECT periodo, populacaoperiodo
+                    FROM crescimento_bacteriano
+                    WHERE simulacao_id = %s
+                    ORDER BY periodo
+                    """,
+                    (segunda_id,),
+                )
+                assert cursor.fetchall() == ((1, 11), (2, 22))
 
-            # Confirma que o registro foi excluído
-            cursor.execute(
-                f"SELECT COUNT(*) FROM `{nome_tabela}` WHERE id = %s",
-                (identificador,),
-            )
+                # A chave estrangeira deve rejeitar uma simulação inexistente
+                cursor.execute(
+                    """
+                    SELECT COALESCE(MAX(id), 0) + 1000000
+                    FROM simulacoes_bacterianas
+                    """
+                )
+                id_inexistente = cursor.fetchone()[0]
 
-            quantidade = cursor.fetchone()[0]
-            print(f"Registros após a exclusão: {quantidade}")
-            assert quantidade == 0
+                with pytest.raises(pymysql.err.IntegrityError):
+                    cursor.execute(
+                        """
+                        INSERT INTO crescimento_bacteriano (
+                            simulacao_id,
+                            periodo,
+                            populacaoperiodo
+                        )
+                        VALUES (%s, %s, %s)
+                        """,
+                        (id_inexistente, 1, 1),
+                    )
+
+                conexao.rollback()
+
+                # Excluir uma simulação deve excluir seus períodos em cascata
+                cursor.execute(
+                    "DELETE FROM simulacoes_bacterianas WHERE id = %s",
+                    (primeira_id,),
+                )
+                conexao.commit()
+
+                cursor.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM crescimento_bacteriano
+                    WHERE simulacao_id = %s
+                    """,
+                    (primeira_id,),
+                )
+                assert cursor.fetchone() == (0,)
+
+                # A segunda simulação e seus resultados devem continuar intactos
+                cursor.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM simulacoes_bacterianas
+                    WHERE id = %s
+                    """,
+                    (segunda_id,),
+                )
+                assert cursor.fetchone() == (1,)
+
+                cursor.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM crescimento_bacteriano
+                    WHERE simulacao_id = %s
+                    """,
+                    (segunda_id,),
+                )
+                assert cursor.fetchone() == (2,)
+
+        finally:
+            conexao.close()
 
     finally:
-        # Remove somente a tabela temporária criada pelo teste
-        with conexao.cursor() as cursor:
-            cursor.execute(f"DROP TABLE IF EXISTS `{nome_tabela}`")
-            conexao.commit()
+        # Remove somente as simulações criadas por esta execução do teste
+        if simulacao_ids:
+            conexao_limpeza = conectar()
 
-        conexao.close()
+            try:
+                with conexao_limpeza.cursor() as cursor:
+                    cursor.executemany(
+                        "DELETE FROM simulacoes_bacterianas WHERE id = %s",
+                        [(simulacao_id,) for simulacao_id in simulacao_ids],
+                    )
+
+                conexao_limpeza.commit()
+
+            finally:
+                conexao_limpeza.close()
