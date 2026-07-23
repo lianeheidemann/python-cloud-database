@@ -22,10 +22,10 @@ MySQL em nuvem. A aplicação:
 
 1. calcula uma sequência de crescimento bacteriano;
 2. estabelece uma conexão SSL com a Aiven;
-3. cria a tabela `crescimento_bacteriano`, caso ela ainda não exista;
-4. remove os registros da execução anterior;
-5. insere a nova sequência;
-6. consulta e exibe os valores armazenados.
+3. cria as tabelas `simulacoes_bacterianas` e `crescimento_bacteriano`;
+4. registra a data, a população inicial e a quantidade de períodos;
+5. insere os resultados de cada período em uma única transação;
+6. consulta a simulação recém-registrada sem apagar o histórico.
 
 ```mermaid
 flowchart LR
@@ -47,9 +47,10 @@ períodos:
 - validação de população inicial e quantidade de períodos;
 - configuração por variáveis de ambiente;
 - conexão MySQL com verificação SSL pelo certificado CA;
-- criação automática da tabela e de sua chave primária;
-- inserção parametrizada para evitar interpolação insegura de valores;
-- consulta ordenada dos registros;
+- criação automática das tabelas e de suas chaves primária e estrangeira;
+- histórico separado de cada simulação;
+- inserção parametrizada dos períodos em uma única transação;
+- consulta ordenada dos resultados de cada simulação;
 - rollback em falhas de escrita;
 - teste real de conexão com `SELECT 1`;
 - teste real de criação, inserção, consulta e exclusão na Aiven;
@@ -71,20 +72,49 @@ períodos:
 
 ## Modelo de dados
 
-A aplicação cria a tabela principal com a seguinte estrutura:
+Cada execução gera um registro em `simulacoes_bacterianas`. Os resultados de
+cada período ficam em `crescimento_bacteriano` e são associados à simulação
+pela chave estrangeira `simulacao_id`.
 
-```sql
-CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    populacaoperiodo BIGINT NOT NULL,
-    PRIMARY KEY (id)
-);
+```mermaid
+erDiagram
+    simulacoes_bacterianas ||--|{ crescimento_bacteriano : possui
+    simulacoes_bacterianas {
+        BIGINT id PK
+        TIMESTAMP data_simulacao
+        BIGINT populacao_inicial
+        INT quantidade_periodos
+    }
+    crescimento_bacteriano {
+        BIGINT id PK
+        BIGINT simulacao_id FK
+        INT periodo
+        BIGINT populacaoperiodo
+    }
 ```
 
-| Coluna | Tipo | Descrição |
-| --- | --- | --- |
-| `id` | `BIGINT UNSIGNED` | Identificador único e auto-incrementável |
-| `populacaoperiodo` | `BIGINT` | População calculada em cada período |
+```sql
+CREATE TABLE IF NOT EXISTS simulacoes_bacterianas (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    data_simulacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    populacao_inicial BIGINT UNSIGNED NOT NULL,
+    quantidade_periodos INT UNSIGNED NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS crescimento_bacteriano (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    simulacao_id BIGINT UNSIGNED NOT NULL,
+    periodo INT UNSIGNED NOT NULL,
+    populacaoperiodo BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_simulacao_periodo (simulacao_id, periodo),
+    CONSTRAINT fk_crescimento_simulacao
+        FOREIGN KEY (simulacao_id)
+        REFERENCES simulacoes_bacterianas (id)
+        ON DELETE CASCADE
+);
+```
 
 ## Estrutura do projeto
 
@@ -200,16 +230,24 @@ Lista gerada:
 [5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560]
 
 Tamanho da lista: 10
-Tabela verificada com sucesso!
-Tabela limpa com sucesso!
+Tabelas verificadas com sucesso!
+Simulação 1 registrada com sucesso!
 ```
 
 Para consultar os registros no MySQL Workbench:
 
 ```sql
-SELECT *
-FROM defaultdb.crescimento_bacteriano
-ORDER BY id;
+SELECT
+    s.id AS simulacao,
+    s.data_simulacao,
+    s.populacao_inicial,
+    s.quantidade_periodos,
+    c.periodo,
+    c.populacaoperiodo
+FROM defaultdb.simulacoes_bacterianas AS s
+INNER JOIN defaultdb.crescimento_bacteriano AS c
+    ON c.simulacao_id = s.id
+ORDER BY s.id DESC, c.periodo;
 ```
 
 ## Testes
@@ -235,7 +273,7 @@ Registros após a exclusão: 0
 2 passed
 ```
 
-Os testes não modificam a tabela principal `crescimento_bacteriano`.
+Os testes não modificam as tabelas `simulacoes_bacterianas` e `crescimento_bacteriano`.
 
 ### GitHub Actions
 
@@ -249,7 +287,7 @@ Para executar o teste da Aiven:
 1. abra a aba **Actions**;
 2. selecione **Teste de conexão Aiven**;
 3. clique em **Run workflow**;
-4. escolha a branch `main`;
+4. escolha a branch que deseja testar;
 5. confirme a execução.
 
 O workflow utiliza estes **Repository Secrets**:
@@ -274,9 +312,9 @@ não uma credencial secreta.
 - altere imediatamente qualquer credencial exposta;
 - não grave senhas diretamente no código ou no workflow.
 
-> [!WARNING]
-> A execução de `main.py` chama `TRUNCATE TABLE crescimento_bacteriano` antes de inserir a
-> nova sequência. Isso remove todos os registros anteriores da tabela principal.
+> [!NOTE]
+> Cada execução de `main.py` cria uma nova simulação. Os registros das
+> simulações anteriores são preservados.
 
 ## Solução de problemas
 
@@ -294,6 +332,5 @@ instruções para:
 - criar testes unitários para `calculo.py`;
 - validar as variáveis de ambiente antes da conexão;
 - substituir os `print()` por logs estruturados;
-- inserir listas de valores em uma única transação;
 - adicionar relatório de cobertura de testes.
 
