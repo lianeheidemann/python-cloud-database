@@ -5,6 +5,8 @@
 Aplicação Python que gera dados de crescimento bacteriano e os armazena em um
 banco MySQL na Aiven.
 
+[![Verificação do código Python](https://github.com/lianeheidemann/python_cloud_database/actions/workflows/python-checks.yml/badge.svg)](https://github.com/lianeheidemann/python_cloud_database/actions/workflows/python-checks.yml)
+
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 ![Aiven](https://img.shields.io/badge/Aiven-Cloud-FF3554?style=for-the-badge&logo=aiven&logoColor=white)
