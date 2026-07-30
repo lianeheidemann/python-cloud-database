@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import pymysql
@@ -70,7 +71,7 @@ def criar_tabela():
 
 def inserir_dados(valor):
     """
-    Insere um valor na tabela.
+    Insere um valor na tabela. Retorna True em caso de sucesso, False em falha.
     """
     conexao = conectar()
     cursor = conexao.cursor()
@@ -84,10 +85,12 @@ def inserir_dados(valor):
         cursor.execute(sql, (valor,))
         conexao.commit()
         print(f"Valor {valor} inserido com sucesso!")
+        return True
 
     except pymysql.MySQLError as erro:
         conexao.rollback()
         print(f"Erro ao inserir dados: {erro}")
+        return False
 
     finally:
         cursor.close()
@@ -96,7 +99,7 @@ def inserir_dados(valor):
 
 def mostrar_dados():
     """
-    Mostra todos os dados da tabela.
+    Mostra todos os dados da tabela. Retorna True em caso de sucesso, False em falha.
     """
     conexao = conectar()
     cursor = conexao.cursor()
@@ -112,8 +115,11 @@ def mostrar_dados():
         for row in resultados:
             print(f"Valor: {row[0]}")
 
+        return True
+
     except pymysql.MySQLError as erro:
         print(f"Erro ao buscar dados: {erro}")
+        return False
 
     finally:
         cursor.close()
@@ -122,7 +128,7 @@ def mostrar_dados():
 
 def limpar_tabela():
     """
-    Limpa todos os dados da tabela.
+    Limpa todos os dados da tabela. Retorna True em caso de sucesso, False em falha.
     """
     conexao = conectar()
     cursor = conexao.cursor()
@@ -133,10 +139,12 @@ def limpar_tabela():
         cursor.execute(sql)
         conexao.commit()
         print("Tabela limpa com sucesso!")
+        return True
 
     except pymysql.MySQLError as erro:
         conexao.rollback()
         print(f"Erro ao limpar tabela: {erro}")
+        return False
 
     finally:
         cursor.close()
@@ -146,10 +154,16 @@ def limpar_tabela():
 def inserir_lista(lista):
     """
     Insere todos os valores da lista no banco.
+    Retorna True se todos os inserts tiverem sucesso, False caso algum falhe.
     """
+    sucesso = True
+
     for valor in lista:
         print(f"Inserindo: {valor}")
-        inserir_dados(valor)
+        if not inserir_dados(valor):
+            sucesso = False
+
+    return sucesso
 
 
 def tamanho_lista(lista):
@@ -171,10 +185,14 @@ if __name__ == "__main__":
 
     # Cria a tabela e limpa os registros antes de inserir novos dados
     criar_tabela()
-    limpar_tabela()
+
+    sucesso = limpar_tabela()
 
     # Insere os dados no banco
-    inserir_lista(lista)
+    sucesso = inserir_lista(lista) and sucesso
 
     # Mostra os dados inseridos
-    mostrar_dados()
+    sucesso = mostrar_dados() and sucesso
+
+    if not sucesso:
+        sys.exit(1)

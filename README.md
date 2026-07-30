@@ -6,7 +6,6 @@ Aplicação Python que simula o crescimento de uma população bacteriana e
 armazena os resultados em um banco MySQL gerenciado na Aiven.
 
 [![Verificação do código Python](https://github.com/lianeheidemann/python_cloud_database/actions/workflows/python-checks.yml/badge.svg)](https://github.com/lianeheidemann/python_cloud_database/actions/workflows/python-checks.yml)
-[![Teste de conexão Aiven](https://github.com/lianeheidemann/python_cloud_database/actions/workflows/aiven-connection.yml/badge.svg?event=workflow_dispatch)](https://github.com/lianeheidemann/python_cloud_database/actions/workflows/aiven-connection.yml)
 
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
@@ -95,6 +94,7 @@ python_cloud_database/
 │       ├── aiven-connection.yml      # testes reais e manuais na Aiven
 │       └── python-checks.yml         # verificação automática de sintaxe
 ├── docs/
+│   ├── archive/                      # versões antigas do README
 │   └── configuracao_mysql.md         # configuração da Aiven e do Workbench
 ├── tests/
 │   ├── test_aiven_connection.py      # teste SSL com SELECT 1
@@ -103,10 +103,10 @@ python_cloud_database/
 ├── .gitignore                        # arquivos ignorados pelo Git
 ├── ca.pem                            # certificado CA da Aiven
 ├── calculo.py                        # cálculo do crescimento bacteriano
+├── LICENSE                           # licença MIT
 ├── main.py                           # conexão e operações no MySQL
-├── requirements.txt                   # dependências com versões fixadas
-├── README.md                         # documentação atual
-└── readme_v2.md                      # documentação ampliada
+├── requirements.txt                  # dependências com versões fixadas
+└── README.md                         # documentação atual
 ```
 
 ## Pré-requisitos
@@ -243,6 +243,11 @@ Os testes não modificam a tabela principal `minhaTabela`.
 | --- | --- | --- |
 | `python-checks.yml` | Push, pull request ou execução manual | Compila `main.py` e `calculo.py` para detectar erros de sintaxe |
 | `aiven-connection.yml` | Execução manual | Executa os testes reais de conexão e CRUD na Aiven |
+
+> **Nota:** o badge de status do `aiven-connection.yml` não é exibido no topo deste README
+> porque ele reflete sempre a execução mais recente, e o serviço gratuito da Aiven expira
+> após um período de inatividade — o que deixaria o badge vermelho mesmo com o código
+> funcionando corretamente. Veja o histórico de execuções na aba **Actions** do repositório.
 
 Para executar o teste da Aiven:
 
