@@ -294,6 +294,16 @@ instruções para:
 - identificar uma conexão acidental com o MySQL local;
 - resolver erros relacionados ao certificado ou à chave primária.
 
+## Insights técnicos
+
+- **A validação do certificado é parte essencial da conexão em nuvem:** quando `DB_SSL_CA` é configurado, o cliente usa o certificado CA e verifica o nome do servidor, reduzindo o risco de conexão com um destino incorreto.
+- **Testes de integração precisam ser isolados:** o teste CRUD cria uma tabela com nome único, valida as operações e a remove no bloco `finally`. Assim, uma falha intermediária não deixa recursos de teste nem altera a tabela principal.
+- **Inserções individuais simplificam o código, mas aumentam o número de conexões:** a implementação atual abre uma conexão para cada valor. Para volumes maiores, uma única conexão e uma transação em lote reduziriam a sobrecarga.
+- **O modelo atual representa somente a execução mais recente:** o uso de `TRUNCATE TABLE` antes das inserções facilita a demonstração, porém elimina o histórico. Armazenar cada simulação separadamente seria necessário para comparar execuções ao longo do tempo.
+- **Consultas parametrizadas protegem os valores enviados ao SQL:** os dados são passados separadamente da instrução, evitando montar comandos por interpolação de conteúdo externo.
+
+---
+
 ## Melhorias futuras
 
 - criar testes unitários para `calculo.py`;
