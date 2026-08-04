@@ -302,3 +302,6 @@ instruções para:
 - inserir listas de valores em uma única transação;
 - adicionar relatório de cobertura de testes.
 
+---
+
+<p align='center'>Developed by <strong>Liane Heidemann</strong><p>
