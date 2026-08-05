@@ -2,10 +2,9 @@
 
 # Python Cloud Database
 
-Aplicação Python que simula o crescimento de uma população bacteriana e
-armazena os resultados em um banco MySQL gerenciado na Aiven.
+A Python application that simulates bacterial population growth and stores the results in a managed MySQL database on Aiven.
 
-[![Verificação do código Python](https://github.com/lianeheidemann/python_cloud_database/actions/workflows/python-checks.yml/badge.svg)](https://github.com/lianeheidemann/python_cloud_database/actions/workflows/python-checks.yml)
+[![Python code checks](https://github.com/lianeheidemann/python-cloud-database/actions/workflows/python-checks.yml/badge.svg)](https://github.com/lianeheidemann/python-cloud-database/actions/workflows/python-checks.yml)
 
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
@@ -14,17 +13,16 @@ armazena os resultados em um banco MySQL gerenciado na Aiven.
 
 </div>
 
-## Visão geral
+## Overview
 
-O projeto demonstra um fluxo completo de integração entre Python e um banco
-MySQL em nuvem. A aplicação:
+This project demonstrates a complete integration flow between Python and a cloud-hosted MySQL database. The application:
 
-1. calcula uma sequência de crescimento bacteriano;
-2. estabelece uma conexão SSL com a Aiven;
-3. cria a tabela `minhaTabela`, caso ela ainda não exista;
-4. remove os registros da execução anterior;
-5. insere a nova sequência;
-6. consulta e exibe os valores armazenados.
+1. Calculates a bacterial growth sequence.
+2. Establishes an SSL connection to Aiven.
+3. Creates the `minhaTabela` table if it does not exist.
+4. Removes records from the previous run.
+5. Inserts the new sequence.
+6. Retrieves and displays the stored values.
 
 ```mermaid
 flowchart LR
@@ -33,44 +31,43 @@ flowchart LR
     C --> D["Aiven MySQL"]
 ```
 
-Com a configuração padrão, a população começa em `5` e dobra durante dez
-períodos:
+With the default configuration, the population starts at `5` and doubles over ten periods:
 
 ```text
 [5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560]
 ```
 
-## Funcionalidades
+## Features
 
-- geração determinística dos dados de crescimento;
-- validação de população inicial e quantidade de períodos;
-- configuração por variáveis de ambiente;
-- conexão MySQL com verificação SSL pelo certificado CA;
-- criação automática da tabela e de sua chave primária;
-- inserção parametrizada para evitar interpolação insegura de valores;
-- consulta ordenada dos registros;
-- rollback em falhas de escrita;
-- teste real de conexão com `SELECT 1`;
-- teste real de criação, inserção, consulta e exclusão na Aiven;
-- limpeza automática dos recursos temporários criados pelos testes;
-- verificação automática de sintaxe com GitHub Actions.
+- Deterministic bacterial-growth data generation
+- Validation of the initial population and number of periods
+- Environment-based configuration
+- Verified SSL connection through a CA certificate
+- Automatic table and primary-key creation
+- Parameterized inserts to avoid unsafe value interpolation
+- Ordered record retrieval
+- Rollback after write failures
+- Real connection test with `SELECT 1`
+- Real create, insert, read, and delete test on Aiven
+- Automatic cleanup of temporary test resources
+- Automated syntax validation with GitHub Actions
 
-## Tecnologias
+## Technologies
 
-| Tecnologia | Finalidade |
-| --- | --- |
-| Python 3.13 | Lógica da aplicação e dos testes |
-| MySQL 8.4 | Armazenamento relacional |
-| Aiven | Hospedagem gerenciada do MySQL |
-| PyMySQL | Driver de conexão com o banco |
-| python-dotenv | Leitura das variáveis do arquivo `.env` |
-| cryptography | Suporte à autenticação segura do driver |
-| pytest | Testes automatizados |
-| GitHub Actions | Integração contínua e testes manuais na nuvem |
+| Technology | Purpose |
+|---|---|
+| Python 3.13 | Application and test logic |
+| MySQL 8.4 | Relational data storage |
+| Aiven | Managed MySQL hosting |
+| PyMySQL | Database connection driver |
+| python-dotenv | Loading variables from `.env` |
+| cryptography | Secure driver authentication support |
+| pytest | Automated testing |
+| GitHub Actions | Continuous integration and manual cloud tests |
 
-## Modelo de dados
+## Data Model
 
-A aplicação cria a tabela principal com a seguinte estrutura:
+The application creates the main table with the following structure:
 
 ```sql
 CREATE TABLE IF NOT EXISTS minhaTabela (
@@ -80,131 +77,128 @@ CREATE TABLE IF NOT EXISTS minhaTabela (
 );
 ```
 
-| Coluna | Tipo | Descrição |
-| --- | --- | --- |
-| `id` | `BIGINT UNSIGNED` | Identificador único e auto-incrementável |
-| `valores` | `BIGINT` | População calculada em cada período |
+| Column | Type | Description |
+|---|---|---|
+| `id` | `BIGINT UNSIGNED` | Unique auto-incrementing identifier |
+| `valores` | `BIGINT` | Population calculated for each period |
 
-## Estrutura do projeto
+## Project Structure
 
 ```text
-python_cloud_database/
+python-cloud-database/
 ├── .github/
 │   └── workflows/
-│       ├── aiven-connection.yml      # testes reais e manuais na Aiven
-│       └── python-checks.yml         # verificação automática de sintaxe
+│       ├── aiven-connection.yml      # real, manually triggered Aiven tests
+│       └── python-checks.yml         # automated syntax checks
 ├── docs/
-│   ├── archive/                      # versões antigas do README
-│   └── configuracao_mysql.md         # configuração da Aiven e do Workbench
+│   ├── archive/                      # previous README versions
+│   └── configuracao_mysql.md         # Aiven and Workbench setup
 ├── tests/
-│   ├── test_aiven_connection.py      # teste SSL com SELECT 1
-│   └── test_aiven_crud.py            # teste CRUD em tabela temporária
-├── .env.example                      # modelo das variáveis de ambiente
-├── .gitignore                        # arquivos ignorados pelo Git
-├── ca.pem                            # certificado CA da Aiven
-├── calculo.py                        # cálculo do crescimento bacteriano
-├── LICENSE                           # licença MIT
-├── main.py                           # conexão e operações no MySQL
-├── requirements.txt                  # dependências com versões fixadas
-└── README.md                         # documentação atual
+│   ├── test_aiven_connection.py      # SSL test using SELECT 1
+│   └── test_aiven_crud.py            # CRUD test using a temporary table
+├── .env.example                      # environment-variable template
+├── .gitignore                        # ignored files
+├── ca.pem                            # Aiven CA certificate
+├── calculo.py                        # bacterial-growth calculation
+├── LICENSE                           # MIT License
+├── main.py                           # MySQL connection and operations
+├── requirements.txt                  # pinned dependencies
+└── README.md                         # current documentation
 ```
 
-## Pré-requisitos
+## Prerequisites
 
-- Python 3.13 ou versão compatível;
-- Git;
-- serviço MySQL ativo na Aiven;
-- certificado CA fornecido pela Aiven;
-- MySQL Workbench, opcionalmente, para consultas gráficas.
+- Python 3.13 or a compatible version
+- Git
+- An active MySQL service on Aiven
+- The CA certificate supplied by Aiven
+- Optionally, MySQL Workbench for graphical queries
 
-Não é necessário instalar ou executar um servidor MySQL local.
+A local MySQL server is not required.
 
-## Instalação
+## Installation
 
-### 1. Clone o repositório
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/lianeheidemann/python_cloud_database.git
-cd python_cloud_database
+git clone https://github.com/lianeheidemann/python-cloud-database.git
+cd python-cloud-database
 ```
 
-### 2. Crie o ambiente virtual
+### 2. Create a Virtual Environment
 
 ```bash
 python -m venv .venv
 ```
 
-Ative o ambiente no Windows PowerShell:
+Activate it on Windows PowerShell:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-No Linux ou macOS:
+On Linux or macOS:
 
 ```bash
 source .venv/bin/activate
 ```
 
-### 3. Instale as dependências
+### 3. Install Dependencies
 
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-## Configuração da Aiven
+## Aiven Configuration
 
-No painel da Aiven, abra o serviço MySQL e copie os dados apresentados em
-**Connection information**. Baixe também o **CA Certificate**.
+In the Aiven console, open your MySQL service and copy the values under **Connection information**. Download the **CA Certificate** as well.
 
-Crie o arquivo `.env` a partir do modelo:
+Create `.env` from the template:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-No Linux ou macOS:
+On Linux or macOS:
 
 ```bash
 cp .env.example .env
 ```
 
-Preencha o `.env`:
+Fill in the environment variables:
 
 ```env
-DB_HOST=host-fornecido-pela-aiven
-DB_PORT=porta-fornecida-pela-aiven
-DB_USER=usuario-fornecido-pela-aiven
-DB_PASSWORD="senha-fornecida-pela-aiven"
+DB_HOST=host-provided-by-aiven
+DB_PORT=port-provided-by-aiven
+DB_USER=user-provided-by-aiven
+DB_PASSWORD="password-provided-by-aiven"
 DB_NAME=defaultdb
 DB_SSL_CA=ca.pem
 ```
 
-Salve o certificado da Aiven como `ca.pem` na raiz do projeto. Consulte o
-[guia detalhado de configuração](docs/configuracao_mysql.md) para configurar
-também o MySQL Workbench.
+Save the Aiven certificate as `ca.pem` in the project root. See the [detailed MySQL configuration guide](docs/configuracao_mysql.md) for MySQL Workbench setup.
 
-## Execução
+## Running the Application
 
-Com o ambiente virtual ativo e o `.env` configurado:
+With the virtual environment active and `.env` configured:
 
 ```bash
 python main.py
 ```
 
-Saída resumida:
+Example output:
 
 ```text
-Lista gerada:
+Generated list:
 [5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560]
 
-Tamanho da lista: 10
-Tabela verificada com sucesso!
-Tabela limpa com sucesso!
+List length: 10
+Table verified successfully!
+Table cleared successfully!
 ```
 
-Para consultar os registros no MySQL Workbench:
+To query records in MySQL Workbench:
 
 ```sql
 SELECT *
@@ -212,96 +206,88 @@ FROM defaultdb.minhaTabela
 ORDER BY id;
 ```
 
-## Testes
+## Tests
 
-### Testes locais
+### Local Tests
 
-Os testes usam uma conexão real com a Aiven. Configure o `.env` e execute:
+The tests use a real Aiven connection. Configure `.env` and run:
 
 ```bash
 python -m pytest -q -s tests
 ```
 
-O primeiro teste valida a conexão SSL com `SELECT 1`. O segundo cria uma tabela
-com nome aleatório, insere e consulta um registro, exclui esse registro e remove
-a tabela no bloco `finally`.
+The first test validates the SSL connection with `SELECT 1`. The second creates a randomly named table, inserts and retrieves a record, deletes the record, and removes the table in a `finally` block.
 
-Saída esperada:
+Expected output:
 
 ```text
-Tabela criada: github_actions_test_...
-Registro consultado: ('teste-crud-github-actions',)
-Registros após a exclusão: 0
+Table created: github_actions_test_...
+Record retrieved: ('teste-crud-github-actions',)
+Records after deletion: 0
 2 passed
 ```
 
-Os testes não modificam a tabela principal `minhaTabela`.
+The tests do not modify the main `minhaTabela` table.
 
 ### GitHub Actions
 
-| Workflow | Acionamento | Verificação |
-| --- | --- | --- |
-| `python-checks.yml` | Push, pull request ou execução manual | Compila `main.py` e `calculo.py` para detectar erros de sintaxe |
-| `aiven-connection.yml` | Execução manual | Executa os testes reais de conexão e CRUD na Aiven |
+| Workflow | Trigger | Validation |
+|---|---|---|
+| `python-checks.yml` | Push, pull request, or manual run | Compiles `main.py` and `calculo.py` to detect syntax errors |
+| `aiven-connection.yml` | Manual run | Executes real connection and CRUD tests on Aiven |
 
-> **Nota:** o badge de status do `aiven-connection.yml` não é exibido no topo deste README
-> porque ele reflete sempre a execução mais recente, e o serviço gratuito da Aiven expira
-> após um período de inatividade — o que deixaria o badge vermelho mesmo com o código
-> funcionando corretamente. Veja o histórico de execuções na aba **Actions** do repositório.
+> **Note:** the `aiven-connection.yml` status badge is intentionally omitted because the free Aiven service expires after inactivity. A red badge could therefore represent an inactive service rather than faulty code. The full run history remains available in the repository's **Actions** tab.
 
-Para executar o teste da Aiven:
+To run the Aiven tests:
 
-1. abra a aba **Actions**;
-2. selecione **Teste de conexão Aiven**;
-3. clique em **Run workflow**;
-4. escolha a branch `main`;
-5. confirme a execução.
+1. Open the **Actions** tab.
+2. Select **Aiven connection test**.
+3. Click **Run workflow**.
+4. Select the `main` branch.
+5. Confirm the run.
 
-O workflow utiliza estes **Repository Secrets**:
+The workflow uses these repository secrets:
 
-| Secret | Conteúdo esperado |
-| --- | --- |
-| `AIVEN_DB_HOST` | Host do serviço |
-| `AIVEN_DB_PORT` | Porta do serviço |
-| `AIVEN_DB_USER` | Usuário do banco |
-| `AIVEN_DB_PASSWORD` | Senha do banco |
-| `AIVEN_DB_NAME` | Nome do banco, normalmente `defaultdb` |
+| Secret | Expected value |
+|---|---|
+| `AIVEN_DB_HOST` | Service host |
+| `AIVEN_DB_PORT` | Service port |
+| `AIVEN_DB_USER` | Database user |
+| `AIVEN_DB_PASSWORD` | Database password |
+| `AIVEN_DB_NAME` | Database name, usually `defaultdb` |
 
-O caminho `DB_SSL_CA: ca.pem` é definido no YAML porque identifica um arquivo,
-não uma credencial secreta.
+The `DB_SSL_CA: ca.pem` path is defined directly in the workflow because it identifies a file, not a secret credential.
 
-## Segurança
+## Security
 
-- nunca publique o `.env`, a senha ou a Service URI;
-- mantenha somente valores ilustrativos no `.env.example`;
-- armazene credenciais de automação em GitHub Secrets;
-- utilize o certificado CA para validar a identidade do servidor;
-- altere imediatamente qualquer credencial exposta;
-- não grave senhas diretamente no código ou no workflow.
+- Never publish `.env`, a database password, or the service URI.
+- Keep only illustrative values in `.env.example`.
+- Store automation credentials in GitHub Secrets.
+- Use the CA certificate to verify the server identity.
+- Rotate any exposed credential immediately.
+- Never hard-code passwords in source code or workflows.
 
 > [!WARNING]
-> A execução de `main.py` chama `TRUNCATE TABLE minhaTabela` antes de inserir a
-> nova sequência. Isso remove todos os registros anteriores da tabela principal.
+> Running `main.py` calls `TRUNCATE TABLE minhaTabela` before inserting the new sequence. This deletes all existing records from the main table.
 
-## Solução de problemas
+## Troubleshooting
 
-O guia [Configuração do MySQL na Aiven](docs/configuracao_mysql.md) reúne
-instruções para:
+The [Aiven MySQL configuration guide](docs/configuracao_mysql.md) covers:
 
-- configurar SSL;
-- conectar pelo MySQL Workbench;
-- corrigir `Access denied`;
-- identificar uma conexão acidental com o MySQL local;
-- resolver erros relacionados ao certificado ou à chave primária.
+- SSL configuration
+- MySQL Workbench connections
+- `Access denied` errors
+- Accidental connections to a local MySQL server
+- Certificate and primary-key issues
 
-## Melhorias futuras
+## Future Improvements
 
-- criar testes unitários para `calculo.py`;
-- validar as variáveis de ambiente antes da conexão;
-- substituir os `print()` por logs estruturados;
-- inserir listas de valores em uma única transação;
-- adicionar relatório de cobertura de testes.
+- Add unit tests for `calculo.py`
+- Validate environment variables before connecting
+- Replace `print()` calls with structured logging
+- Insert value lists in a single transaction
+- Add a test-coverage report
 
 ---
 
-<p align='center'>Developed by <strong>Liane Heidemann</strong><p>
+<p align="center">Developed by <strong>Liane Heidemann</strong></p>
