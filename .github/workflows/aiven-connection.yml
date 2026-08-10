@@ -1,4 +1,4 @@
-name: Teste de conexão Aiven
+name: Aiven Connection Test
 
 on:
   workflow_dispatch:
