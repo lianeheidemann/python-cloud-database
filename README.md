@@ -5,6 +5,7 @@
 A Python application that simulates bacterial population growth and stores the results in a managed MySQL database on Aiven.
 
 [![Python Code Verification](https://github.com/lianeheidemann/python-cloud-database/actions/workflows/python-checks.yml/badge.svg)](https://github.com/lianeheidemann/python-cloud-database/actions/workflows/python-checks.yml)
+[![Aiven Connection Test](https://github.com/lianeheidemann/python-cloud-database/actions/workflows/aiven-connection.yml/badge.svg)](https://github.com/lianeheidemann/python-cloud-database/actions/workflows/aiven-connection.yml)
 
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
@@ -236,7 +237,7 @@ The tests do not modify the main `minhaTabela` table.
 | `python-checks.yml` | Push, pull request, or manual run | Compiles `main.py` and `calculo.py` to detect syntax errors |
 | `aiven-connection.yml` | Manual run | Executes real connection and CRUD tests on Aiven |
 
-> **Note:** the `aiven-connection.yml` status badge is intentionally omitted because the free Aiven service expires after inactivity. A red badge could therefore represent an inactive service rather than faulty code. The full run history remains available in the repository's **Actions** tab.
+> **Note:** because this workflow only runs on manual trigger (`workflow_dispatch`), the badge above reflects the result of the *last manual run*, not the current state of the code. A red badge may indicate that the free Aiven service expired from inactivity rather than a code failure. Re-run the workflow after confirming the Aiven service is active to get an up-to-date result. The full run history remains available in the repository's **Actions** tab.
 
 To run the Aiven tests:
 
