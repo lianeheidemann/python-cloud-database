@@ -4,7 +4,7 @@
 
 A Python application that simulates bacterial population growth and stores the results in a managed MySQL database on Aiven.
 
-[![Python code checks](https://github.com/lianeheidemann/python-cloud-database/actions/workflows/python-checks.yml/badge.svg)](https://github.com/lianeheidemann/python-cloud-database/actions/workflows/python-checks.yml)
+[![Python Code Verification](https://github.com/lianeheidemann/python-cloud-database/actions/workflows/python-checks.yml/badge.svg)](https://github.com/lianeheidemann/python-cloud-database/actions/workflows/python-checks.yml)
 
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
