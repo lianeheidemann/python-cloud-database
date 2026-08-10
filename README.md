@@ -242,7 +242,7 @@ The tests do not modify the main `minhaTabela` table.
 To run the Aiven tests:
 
 1. Open the **Actions** tab.
-2. Select **Aiven connection test**.
+2. Select **Aiven Connection Test**.
 3. Click **Run workflow**.
 4. Select the `main` branch.
 5. Confirm the run.
