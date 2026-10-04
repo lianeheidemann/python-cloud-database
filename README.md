@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/python-cloud-database-logo.png" width="160" alt="Python Cloud Database logo"><br><br>
+
 # Python Cloud Database
 
 A Python application that simulates bacterial population growth and stores the results in a managed MySQL database on Aiven.
