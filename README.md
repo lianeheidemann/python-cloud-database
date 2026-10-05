@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/python-cloud-database-logo.png" width="160" alt="Python Cloud Database logo"><br><br>
+<img src="assets/python-cloud-database-logo-v2.png" width="160" alt="Python Cloud Database logo"><br><br>
 
 # Python Cloud Database
 
